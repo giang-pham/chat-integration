@@ -1,11 +1,11 @@
 #!/bin/env node
 // web lib
-global.Promise = require('bluebird');
 var app = require('express')();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 // connection lib
 var io = require('socket.io')(http);
+var express = require('express');
 var fs = require('fs');
 // word processing lib
 var striptags = require('striptags');
@@ -25,7 +25,7 @@ app.get('/connect', function(req, res) {//TODO: secure the request parameter
 	// create new connection
 	var connection = new Connection(
 		req.query.webhookUri, req.query.token, req.query.channel,
-		req.query.username, req.query.password, req.query.skypeRoomId));
+		req.query.username, req.query.password, req.query.skypeRoomId);
 
 	// create connection key to access later
 	var connectionKey = hash(connection);

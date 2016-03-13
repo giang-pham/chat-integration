@@ -29,7 +29,7 @@ var Connection = function (webhookUri, token, channel, username, password, skype
 Connection.prototype.connect = function() {
   console.log("Connecting to skype and slack");
   initSlack()
-  .then(funtion() {
+  .then(function() {
     initSkype();
   });
 };
@@ -39,7 +39,7 @@ function initSlack(callback) {
   this.slack.setWebhook(this.webhookUri);
 
   this.slackBot = new slackAPI({
-  	'token': this.token
+  	'token': this.token,
   	'logging': true,
   	'autoReconnect': true
   });
@@ -97,7 +97,7 @@ function talkToSkype(text) {
 
 function transformSkypeText(text) {
   //escape tags and correct apos, quote
-  return querystring.unescape(striptags(text)).replace(/&quot;/g, '"').replace(/&apos;/g, "'"),
+  return querystring.unescape(striptags(text)).replace(/&quot;/g, '"').replace(/&apos;/g, "'");
 }
 
 function transformSlackText(username, text) {
