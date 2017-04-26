@@ -48,6 +48,30 @@ app.get('/', function (req, res) {
 app.get('/restart-skype', function(req, res) {
    // TODO: implement
 });
+app.get('/test', function(req, res) {
+
+  var webhookUri = "https://hooks.slack.com/services/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";
+	var token = "xoxb-14980904678-O1AOxpq5lApx9qiZGv9FEYeK";
+	var channel = "#chim-sieu-cuong";
+	var username = "skype.bot423";
+
+  var password = "skyp3bot";
+	var skypeRoomId = "19:eb5c3d26ecce4d2d8dcec9e17c7e66eb@thread.skype";
+  var connection = new Connection(
+		webhookUri, token, channel,
+		username, password, skypeRoomId);
+
+	// create connection key to access later
+	var connectionKey = hash(connection);
+
+	if (connectionKey in connectionMap) { // This bridge has been connected before > pull bridge from map
+		connection = connectionMap[connectionKey];
+	} else { // Build a new bridge & push brige to map
+		connection.connect();
+		connectionMap[connectionKey] = connection;
+	}
+	return connection.getSocket();
+});
 
 // IP and Port follow openshift environment settings
 var ipaddress = process.env.OPENSHIFT_NODEJS_IP || "127.0.0.1";

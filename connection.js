@@ -1,5 +1,6 @@
 // async lib
 var Q = require('q');
+var Rx = require('rxjs/Rx');
 
 // hash lib
 var hash = require('object-hash');
@@ -20,22 +21,31 @@ var Connection = function (webhookUri, token, channel, username, password, skype
   this.skypeRoomId = skypeRoomId;
   // bot api
   this.skyweb = new Skyweb();
+  const errorListener = function(eventName, error) {
+    //console.log(`${errorCount} : Error occured : ${error}`);
+    // errorCount++;
+    // if (errorCount === 10) {
+    //     console.log(`Removing error listener`);
+    //     this.skyweb.un('error', errorListener); // Removing error listener
+    // }
+    console.log(error);
+  };
+  this.skyweb.on('error', errorListener); //Adding error listener
+
   this.slack = new Slack();
-  this.slackBot = new slackAPI();
+  //this.slackBot = new slackAPI();
 
   this.socket = hash(this);
 };
 
 Connection.prototype.connect = function() {
   console.log("Connecting to skype and slack");
-  initSlack()
-  .then(function() {
-    initSkype();
-  });
+  this.initSlack();
+  this.initSkype();
 };
 
-function initSlack(callback) {
-  var deferred = Q.defer();
+Connection.prototype.initSlack = function() {
+  //var deferred = Q.defer();
   this.slack.setWebhook(this.webhookUri);
 
   this.slackBot = new slackAPI({
@@ -44,44 +54,46 @@ function initSlack(callback) {
   	'autoReconnect': true
   });
 
-  deferred.promise.nodeify(callback);
-  return deferred.promise;
+  //deferred.resolve(callback);
+  //return deferred.promise;
 }
 
-function initSkype () {
-  skyweb.login(this.username, this.password).then(function (skypeAccount) {
-    listenSkype();
-    listenSlack();
+Connection.prototype.initSkype = function () {
+  this.skyweb.login(this.username, this.password).then(function (skypeAccount) {
+    console.log('Skype logged in as ' + this.username);
+    this.listenSkype();
+    this.listenSlack();
   });
 }
 
-function listenSlack() {
+Connection.prototype.listenSlack = function () {
   this.slackBot.on('message', function (data) {
-    var user = bot.getUser(data.user);
+    console.log('sending slacks msg: ' + data );
+    var user = this.slackBot.getUser(data.user);
     if (user != null) {
       var text = transformSlackText(user.name, data.text);
-      talkToSkype(text);
+      this.talkToSkype(text);
     } else {
       console.log("not a user");
     }
   });
 }
 
-function listenSkype() {
-  skyweb.messagesCallback = function (messages) {
+Connection.prototype.listenSkype = function () {
+  this.skyweb.messagesCallback = function (messages) {
       messages.forEach(function (message) {
       var conversationLink = message.resource.conversationLink;
       var conversationId = conversationLink.substring(conversationLink.lastIndexOf('/') + 1);
       if (skypeRoomId == conversationId) {
         if (message.resource.imdisplayname != username) {
-          talkToSlack(transformSkypeText(message.resource.content));
+          this.talkToSlack(transformSkypeText(message.resource.content));
         }
       }
     });
   };
 }
 
-function talkToSlack(text) {
+Connection.prototype.talkToSlack = function (text) {
   this.slack.webhook({
     channel: this.channel,
     username: message.resource.imdisplayname,
@@ -91,8 +103,8 @@ function talkToSlack(text) {
   });
 }
 
-function talkToSkype(text) {
-  this.skyweb.sendMessage(skypeRoomId, text);
+Connection.prototype.talkToSkype = function (text) {
+  this.skyweb.sendMessage(this.skypeRoomId, text);
 }
 
 function transformSkypeText(text) {
